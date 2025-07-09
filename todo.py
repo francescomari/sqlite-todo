@@ -5,61 +5,68 @@ DB_NAME = "todos.db"
 
 
 def init_db():
-    with sqlite3.connect(DB_NAME) as conn:
-        c = conn.cursor()
-        c.execute(
-            """
+    db = sqlite3.connect(DB_NAME)
+    try:
+        db.execute("""
             CREATE TABLE IF NOT EXISTS todos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 description TEXT NOT NULL,
                 completed INTEGER NOT NULL DEFAULT 0
             )
-        """
-        )
-        conn.commit()
+        """)
+    finally:
+        db.close()
 
 
 def add_todo(description):
-    with sqlite3.connect(DB_NAME) as conn:
-        c = conn.cursor()
-        c.execute("INSERT INTO todos (description) VALUES (?)", (description,))
-        conn.commit()
+    db = sqlite3.connect(DB_NAME)
+    try:
+        db.execute("INSERT INTO todos (description) VALUES (?)", (description,))
+        db.commit()
         print("Added todo:", description)
+    finally:
+        db.close()
 
 
 def list_todos():
-    with sqlite3.connect(DB_NAME) as conn:
-        c = conn.cursor()
-        c.execute("SELECT id, description, completed FROM todos ORDER BY id")
-        todos = c.fetchall()
+    db = sqlite3.connect(DB_NAME)
+    try:
+        cursor = db.execute("SELECT id, description, completed FROM todos ORDER BY id")
+        todos = cursor.fetchall()
         if not todos:
             print("No todos found.")
             return
         for tid, desc, completed in todos:
             status = "x" if completed else " "
             print(f"[{status}] {tid}: {desc}")
+    finally:
+        db.close()
 
 
 def complete_todo(todo_id):
-    with sqlite3.connect(DB_NAME) as conn:
-        c = conn.cursor()
-        c.execute("UPDATE todos SET completed = 1 WHERE id = ?", (todo_id,))
-        if c.rowcount == 0:
+    db = sqlite3.connect(DB_NAME)
+    try:
+        cursor = db.execute("UPDATE todos SET completed = 1 WHERE id = ?", (todo_id,))
+        if cursor.rowcount == 0:
             print(f"Todo with id {todo_id} not found.")
         else:
             print(f"Todo {todo_id} marked as complete.")
-        conn.commit()
+        db.commit()
+    finally:
+        db.close()
 
 
 def delete_todo(todo_id):
-    with sqlite3.connect(DB_NAME) as conn:
-        c = conn.cursor()
-        c.execute("DELETE FROM todos WHERE id = ?", (todo_id,))
-        if c.rowcount == 0:
+    db = sqlite3.connect(DB_NAME)
+    try:
+        cursor = db.execute("DELETE FROM todos WHERE id = ?", (todo_id,))
+        if cursor.rowcount == 0:
             print(f"Todo with id {todo_id} not found.")
         else:
             print(f"Todo {todo_id} deleted.")
-        conn.commit()
+        db.commit()
+    finally:
+        db.close()
 
 
 def print_usage():
